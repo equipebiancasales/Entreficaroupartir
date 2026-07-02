@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#000000">
+<title>Entre Ficar e Partir</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: dark;
+    --black:#000000;
+    --white:#FFFFFF;
+    --bone:#E8E1D3;
+    --gold:#D9B779;
+    --ash:#8A867E;
+    --hair:rgba(232,225,211,0.16);
+    --hair-strong:rgba(232,225,211,0.45);
+    --serif:'Playfair Display',Georgia,serif;
+    --sans:'Jost',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html{background-color:#000000 !important;}
+  body{background-color:#000000 !important;color:#FFFFFF;}
+  /* camada preta fixa atras de tudo: garante o escuro mesmo em navegador que tenta clarear */
+  body::before{content:"";position:fixed;inset:0;background:#000000;z-index:-1;}
+  body{
+    font-family:var(--sans);
+    min-height:100dvh;
+    display:flex;
+    justify-content:center;
+    align-items:stretch;
+    font-weight:300;
+    line-height:1.5;
+  }
+  .stage{
+    width:100%;
+    max-width:540px;
+    min-height:100dvh;
+    display:flex;
+    flex-direction:column;
+    padding:calc(env(safe-area-inset-top) + 24px) 26px calc(env(safe-area-inset-bottom) + 28px);
+    position:relative;
+  }
+
+  /* progress */
+  .progress{display:flex;gap:5px;margin-bottom:34px;opacity:0;transition:opacity .5s ease;}
+  .progress.on{opacity:1;}
+  .tick{flex:1;height:1.5px;background:var(--hair);overflow:hidden;}
+  .tick span{display:block;height:100%;width:0;background:var(--bone);transition:width .45s ease;}
+  .tick.done span{width:100%;}
+
+  /* screens */
+  .screen{display:none;flex:1;flex-direction:column;animation:rise .55s ease both;}
+  .screen.live{display:flex;}
+  @keyframes rise{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+
+  /* wordmark (marca em tipografia, no lugar da foto) */
+  .wordmark{display:flex;flex-direction:column;align-items:center;text-align:center;margin-top:8px;}
+  .wm-top{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:clamp(20px,5.6vw,26px);
+    letter-spacing:.34em;
+    text-indent:.34em;
+    color:var(--white);
+  }
+  .wm-main{
+    font-family:var(--serif);
+    font-weight:500;
+    font-size:clamp(30px,8.8vw,42px);
+    letter-spacing:.06em;
+    margin-top:6px;
+  }
+  .wm-main em{font-style:normal;color:var(--white);}
+  .wm-main .gold{color:var(--gold);}
+  .wm-rule{
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    width:74%;max-width:300px;margin:18px auto 0;
+  }
+  .wm-rule::before,.wm-rule::after{content:"";height:1px;flex:1;background:var(--hair-strong);}
+  .wm-rule i{width:4px;height:4px;border-radius:50%;background:var(--gold);display:block;}
+
+  /* intro */
+  .intro-body{flex:1;display:flex;flex-direction:column;justify-content:center;gap:26px;}
+  .intro-lead{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:clamp(28px,7.8vw,40px);
+    line-height:1.16;
+    letter-spacing:-.01em;
+  }
+  .intro-lead em{font-style:italic;color:var(--bone);}
+  .intro-sub{font-size:15.5px;color:var(--ash);line-height:1.72;max-width:36ch;}
+  .intro-sub.bright{color:#D8D4CC;}
+
+  /* question */
+  .q-count{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--ash);margin-bottom:26px;}
+  .scene{
+    font-family:var(--serif);
+    font-weight:400;
+    font-size:clamp(23px,6.4vw,31px);
+    line-height:1.28;
+    letter-spacing:-.005em;
+    border-left:1.5px solid var(--hair-strong);
+    padding-left:20px;
+    margin-bottom:14px;
+  }
+  .scene em{font-style:italic;color:var(--bone);}
+  .ask{font-size:14.5px;color:var(--ash);padding-left:21.5px;margin-bottom:30px;line-height:1.6;}
+  .options{display:flex;flex-direction:column;gap:11px;margin-top:auto;}
+  .opt{
+    width:100%;text-align:left;background:transparent;
+    border:1px solid var(--hair);color:var(--white);
+    font-family:var(--sans);font-weight:400;font-size:15.5px;line-height:1.4;
+    padding:17px 18px;cursor:pointer;
+    transition:border-color .25s ease,background .25s ease,transform .12s ease;
+  }
+  .opt:hover{border-color:var(--hair-strong);}
+  .opt:active{transform:scale(.985);}
+  .opt.sel{border-color:var(--bone);background:rgba(232,225,211,0.06);}
+  .opt:focus-visible{outline:2px solid var(--bone);outline-offset:2px;}
+
+  /* result */
+  .result{flex:1;display:flex;flex-direction:column;justify-content:center;gap:26px;}
+  .r-tag{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--ash);}
+  .r-name{
+    font-family:var(--serif);font-weight:500;
+    font-size:clamp(28px,7.6vw,40px);line-height:1.12;letter-spacing:-.01em;
+  }
+  .r-name em{font-style:italic;color:var(--bone);}
+  .r-mirror{font-size:16px;line-height:1.72;color:#D8D4CC;}
+  .r-mirror strong{color:var(--white);font-weight:400;}
+  .r-divider{height:1px;background:var(--hair);width:100%;}
+
+  /* cta */
+  .cta-wrap{display:flex;flex-direction:column;gap:14px;}
+  .cta{
+    display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
+    background:var(--white);color:var(--black);
+    font-family:var(--sans);font-weight:500;font-size:15px;letter-spacing:.02em;
+    text-decoration:none;padding:18px 20px;
+    transition:opacity .2s ease,transform .12s ease;
+  }
+  .cta:active{transform:scale(.985);}
+  .cta:hover{opacity:.9;}
+  .cta svg{width:17px;height:17px;}
+  .cta-note{font-size:12.5px;color:var(--ash);text-align:center;line-height:1.5;}
+
+  .start{
+    align-self:flex-start;background:transparent;border:none;
+    border-bottom:1.5px solid var(--bone);color:var(--white);
+    font-family:var(--sans);font-weight:400;font-size:16px;letter-spacing:.08em;text-transform:uppercase;
+    padding:0 0 7px;cursor:pointer;transition:opacity .2s ease;
+  }
+  .start:hover{opacity:.78;}
+  .start:focus-visible{outline:2px solid var(--bone);outline-offset:4px;}
+  .arrow{display:inline-block;margin-left:9px;transition:transform .2s ease;}
+  .start:hover .arrow{transform:translateX(4px);}
+
+  .footnote{font-size:11px;color:var(--ash);letter-spacing:.04em;margin-top:24px;}
+
+  @media (prefers-reduced-motion: reduce){*{animation:none !important;transition:none !important;}}
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <div class="progress" id="progress"></div>
+
+  <!-- INTRO -->
+  <section class="screen live" id="screen-intro">
+    <div class="wordmark">
+      <span class="wm-top">ENTRE</span>
+      <span class="wm-main"><span class="gold">FICAR</span> <em>E</em> PARTIR</span>
+      <span class="wm-rule"><i></i></span>
+    </div>
+    <div class="intro-body">
+      <h1 class="intro-lead">Você não quer mais ficar.<br>Mas também <em>não consegue ir.</em></h1>
+      <p class="intro-sub bright">Existe um lugar entre salvar o casamento e superar o divórcio. E é nele que você está.</p>
+      <p class="intro-sub">São oito cenas. Responda pelo que é verdade, não pelo que deveria ser. No fim, eu te mostro onde você está.</p>
+      <button class="start" id="btn-start">Começar <span class="arrow">&rarr;</span></button>
+      <p class="footnote">Leva menos de 3 minutos. É só seu.</p>
+    </div>
+  </section>
+
+  <!-- QUESTION -->
+  <section class="screen" id="screen-q">
+    <div class="q-count" id="q-count"></div>
+    <h2 class="scene" id="q-scene"></h2>
+    <p class="ask" id="q-ask"></p>
+    <div class="options" id="q-options"></div>
+  </section>
+
+  <!-- RESULT -->
+  <section class="screen" id="screen-result">
+    <div class="result">
+      <div class="r-tag" id="r-tag"></div>
+      <h2 class="r-name" id="r-name"></h2>
+      <div class="r-divider"></div>
+      <p class="r-mirror" id="r-mirror"></p>
+      <div class="cta-wrap">
+        <a class="cta" id="r-cta" href="#" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15l-1.3 4.7 4.8-1.3A10 10 0 1 0 12 2zm5.2 14c-.2.6-1.2 1.2-1.7 1.2-.4 0-1 .1-3.3-.8-2.8-1.1-4.5-3.9-4.6-4.1-.1-.2-1.1-1.4-1.1-2.7s.7-1.9.9-2.1c.2-.2.5-.3.6-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.3 0 .5l-.4.6c-.2.2-.3.4-.1.7.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.4 2.4 1.5.3.1.5.1.6-.1l.7-.9c.2-.3.4-.2.7-.1l1.9.9c.3.2.5.2.6.4 0 .2 0 .8-.2 1.4z"/></svg>
+          <span id="r-cta-label">Falar com a Bianca</span>
+        </a>
+        <p class="cta-note" id="r-note"></p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* =========================================================
+   CONFIGURAÇÃO  —  TROQUE SÓ ESTA LINHA
+   Número com DDI + DDD, só dígitos. Ex: 5585999998888
+========================================================= */
+const WHATSAPP = "5585996217199";
+
+/* PERGUNTAS  (espelho emocional)
+   u = urgência emocional (0-3) | a = autonomia financeira (0-3) */
+const QUESTIONS = [
+  {scene:"Você deita. Ele do lado. E mesmo assim você se sente <em>sozinha.</em>",
+   ask:"Há quanto tempo essa cama virou um lugar de duas solidões?",
+   options:[
+     {t:"Não é assim. Ainda existe proximidade entre nós.",u:0,a:0},
+     {t:"Começou há pouco. Antes não era desse jeito.",u:1,a:0},
+     {t:"Já perdi a conta de quando mudou.",u:2,a:0},
+     {t:"Anos. Eu só percebi quando parei de esperar que mudasse.",u:3,a:0},
+   ]},
+  {scene:"Você já planejou uma vida sem ele. <em>Na sua cabeça. Em silêncio.</em>",
+   ask:"O quanto isso já aconteceu?",
+   options:[
+     {t:"Nunca cheguei nesse ponto.",u:0,a:0},
+     {t:"Passou pela minha cabeça, rápido, e eu afastei.",u:1,a:0},
+     {t:"Penso nisso quase toda semana.",u:2,a:0},
+     {t:"Eu já sei até onde eu moraria. E não conto pra ninguém.",u:3,a:0},
+   ]},
+  {scene:"Você faz tudo. A casa, os filhos, o emocional de todo mundo. <em>E ninguém vê.</em>",
+   ask:"Quando foi a última vez que alguém perguntou como VOCÊ está?",
+   options:[
+     {t:"Recentemente. Eu me sinto vista.",u:0,a:0},
+     {t:"Faz tempo, mas não me incomoda tanto.",u:1,a:0},
+     {t:"Eu nem lembro mais.",u:2,a:0},
+     {t:"Eu desisti de ser perguntada.",u:3,a:0},
+   ]},
+  {scene:"Tem dias que você quer ir. Tem dias que você não consegue se mexer. <em>Travada no meio.</em>",
+   ask:"Qual frase é mais sua?",
+   options:[
+     {t:"Eu quero ficar. Só estou cansada.",u:0,a:0},
+     {t:"Oscilo. Um dia decido sair, no outro recuo.",u:2,a:0},
+     {t:"É exatamente isso. Eu travei.",u:3,a:0},
+     {t:"Eu já decidi ir. Só não sei como dar o passo.",u:2,a:1},
+   ]},
+  {scene:"Às vezes uma conversa com alguém de fora te faz sentir mais viva <em>do que anos dentro de casa.</em>",
+   ask:"Isso fala com você?",
+   options:[
+     {t:"Não me reconheço nisso.",u:0,a:0},
+     {t:"Já senti algo parecido e me assustei.",u:2,a:0},
+     {t:"Eu sei exatamente do que você está falando.",u:3,a:0},
+     {t:"Prefiro não responder isso.",u:2,a:0},
+   ]},
+  {scene:"Se você decidisse partir amanhã, <em>você se sustentaria?</em>",
+   ask:"A verdade, não a vontade.",
+   options:[
+     {t:"Sim. Tenho minha própria renda e minha autonomia.",u:0,a:3},
+     {t:"Conseguiria, mas seria apertado por um tempo.",u:1,a:2},
+     {t:"Dependo financeiramente dele. Isso me prende.",u:2,a:1},
+     {t:"Não faço ideia. Nunca cuidei dessa parte da minha vida.",u:2,a:0},
+   ]},
+  {scene:"Não é só o medo. <em>Tem uma corrente real que te segura.</em>",
+   ask:"O que mais pesa quando você pensa em mudar de vida?",
+   options:[
+     {t:"O dinheiro. Eu não me sustento sozinha hoje.",u:2,a:0},
+     {t:"Os filhos. A casa que a gente construiu.",u:2,a:2},
+     {t:"O que vão pensar. A imagem. A família. A religião.",u:2,a:2},
+     {t:"Nada material me prende. O que me prende é o medo de mim.",u:3,a:3},
+   ]},
+  {scene:"Há quanto tempo você vive assim. <em>Presente por fora. Partida por dentro.</em>",
+   ask:"Seja honesta com o relógio.",
+   options:[
+     {t:"Meses. É recente.",u:1,a:0},
+     {t:"Um ou dois anos.",u:2,a:0},
+     {t:"Mais tempo do que eu admito em voz alta.",u:3,a:0},
+     {t:"Tanto tempo que virou minha forma de existir.",u:3,a:0},
+   ]},
+];
+
+const U_HIGH = 11;
+const A_HIGH = 4;
+
+const RESULTS = {
+  travessia:{
+    tag:"O seu lugar",
+    name:"A travessia <em>é agora.</em>",
+    mirror:"Você não está confusa. Você está <strong>lúcida</strong>, e é por isso que dói tanto. Você já viu o que não dá mais pra desver. E você tem as condições de se mover. O que falta não é clareza nem coragem. É um lugar onde alguém segure a complexidade inteira disso com você, sem te empurrar pra sair nem pra ficar. <strong>É exatamente pra esse momento que o Entre Ficar e Partir existe.</strong>",
+    label:"Quero entrar na turma",
+    note:"A próxima turma começa dia 15. As vagas são poucas e por um motivo.",
+    seg:"TRAVESSIA",
+    msg:"Oi Bianca. Fiz o quiz e meu resultado foi A TRAVESSIA É AGORA. Quero saber sobre a turma do Entre Ficar e Partir que começa dia 15."
+  },
+  presa:{
+    tag:"O seu lugar",
+    name:"No limbo. <em>E presa nele.</em>",
+    mirror:"A sua dor é real e ela é profunda. A diferença, no seu caso, é que existe uma corrente material te segurando, e ela não é fraqueza sua. É a conta de anos se sustentando, se calando, se apagando dentro de casa. <strong>Sair do limbo não começa pela mala. Começa por você voltar a se enxergar.</strong> E essa parte ninguém pode tirar de você, nem o dinheiro, nem ele, nem o medo.",
+    label:"Quero conversar com a Bianca",
+    note:"Me conta onde você está. Existe um caminho mesmo quando parece que não tem saída.",
+    seg:"PRESA",
+    msg:"Oi Bianca. Fiz o quiz e meu resultado foi NO LIMBO E PRESA NELE. Me identifiquei muito e queria conversar."
+  },
+  limiar:{
+    tag:"O seu lugar",
+    name:"No <em>limiar.</em>",
+    mirror:"Alguma coisa em você já se mexeu, senão você não estaria aqui. Mas você ainda não chegou no ponto sem volta, e não há pressa nenhuma em chegar. <strong>O limbo não avisa quando aperta.</strong> Ele vai te corroendo devagar, e um dia você acorda anos depois. Fica perto. Continua se observando. Quando o chão começar a faltar, você vai saber onde me encontrar.",
+    label:"Quero acompanhar a Bianca",
+    note:"Vou continuar falando dessa fase que ninguém nomeia. Fica comigo.",
+    seg:"LIMIAR",
+    msg:"Oi Bianca. Fiz o quiz e meu resultado foi NO LIMIAR. Quero acompanhar mais sobre esse tema."
+  },
+  comeco:{
+    tag:"O seu lugar",
+    name:"Começando <em>a ver.</em>",
+    mirror:"Talvez você tenha feito esse quiz por outra mulher. Uma amiga, uma irmã, você mesma daqui a alguns anos. <strong>O que você acabou de ler é o mapa de um lugar que adoece em silêncio</strong>, e quase ninguém fala dele a tempo. Guarda isso. Se um dia essas cenas começarem a parecer suas, você já vai saber o nome do que está sentindo.",
+    label:"Quero entender mais",
+    note:"Esse é um trabalho sobre a indecisão que ninguém nomeia. Te espero por aqui.",
+    seg:"COMECO",
+    msg:"Oi Bianca. Fiz o quiz e queria entender melhor o seu trabalho sobre o Entre Ficar e Partir."
+  }
+};
+
+const state = { i:0, u:0, a:0 };
+const el = id => document.getElementById(id);
+
+const prog = el('progress');
+QUESTIONS.forEach(()=>{const t=document.createElement('div');t.className='tick';t.innerHTML='<span></span>';prog.appendChild(t);});
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('live'));
+  el(id).classList.add('live');
+}
+
+function renderQ(){
+  const q=QUESTIONS[state.i];
+  prog.classList.add('on');
+  [...prog.children].forEach((t,idx)=>t.classList.toggle('done', idx<state.i));
+  el('q-count').textContent=`Cena ${state.i+1} de ${QUESTIONS.length}`;
+  el('q-scene').innerHTML=q.scene;
+  el('q-ask').textContent=q.ask;
+  const box=el('q-options');box.innerHTML='';
+  q.options.forEach(o=>{
+    const b=document.createElement('button');
+    b.className='opt';b.textContent=o.t;
+    b.addEventListener('click',()=>choose(o,b));
+    box.appendChild(b);
+  });
+  show('screen-q');
+}
+
+function choose(o,b){
+  b.classList.add('sel');
+  state.u+=o.u;state.a+=o.a;
+  setTimeout(()=>{
+    state.i++;
+    if(state.i<QUESTIONS.length){renderQ();}else{finish();}
+  },230);
+}
+
+function finish(){
+  [...prog.children].forEach(t=>t.classList.add('done'));
+  const uHigh=state.u>=U_HIGH, aHigh=state.a>=A_HIGH;
+  let key;
+  if(uHigh&&aHigh)key='travessia';
+  else if(uHigh&&!aHigh)key='presa';
+  else if(!uHigh&&aHigh)key='limiar';
+  else key='comeco';
+  const r=RESULTS[key];
+  el('r-tag').textContent=r.tag;
+  el('r-name').innerHTML=r.name;
+  el('r-mirror').innerHTML=r.mirror;
+  el('r-cta-label').textContent=r.label;
+  el('r-note').textContent=r.note;
+  const text=encodeURIComponent(`[${r.seg}] ${r.msg}`);
+  el('r-cta').href=`https://wa.me/${WHATSAPP}?text=${text}`;
+  prog.classList.remove('on');
+  show('screen-result');
+  window.scrollTo({top:0});
+}
+
+el('btn-start').addEventListener('click',()=>{state.i=0;state.u=0;state.a=0;renderQ();});
+</script>
+</body>
+</html>
